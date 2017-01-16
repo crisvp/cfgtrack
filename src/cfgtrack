@@ -75,6 +75,11 @@ track() {
         err "Path must be absolute (start with /)"
     fi
 
+    # Explicitly test for symlinks because test dereferences locations.
+    if [ -e "$P" -a -L "$P" -o \! \( -d "$P" -o -f "$P" \) ]; then
+        err "$P is not a regular file or directory."
+    fi
+
     if [ -d "$P" ]; then
         P_DIR="${P:1}"
         P="${P}/."
