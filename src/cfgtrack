@@ -82,7 +82,9 @@ track() {
 
     if [ -d "$P" ]; then
         P_DIR="${P:1}"
-        P="${P}/."
+        if [ \! "${P: -1}" == "/" ]; then
+            P="${P}/"
+        fi
     else
         P_DIR="${$(dirname $P):1}"
     fi
