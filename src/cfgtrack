@@ -160,10 +160,10 @@ if [ $TRACK_DIR = '/' ]; then
     err "Tracking dir $TRACK_DIR cannot be /"
 fi
 if [ \! -d $TRACK_DIR ]; then
-    mkdir -p $TRACK_DIR || err "Can't create tracking dir"
+    install -d -m 0700 "$TRACK_DIR" || err "Can't create archive dir"
 fi
 if [ \! -d $ARCHIVE_DIR ]; then
-    mkdir -p $ARCHIVE_DIR || err "Can't create archive dir"
+    install -d -m 0700 "$ARCHIVE_DIR" || err "Can't create archive dir"
 fi
 
 # Handle options
