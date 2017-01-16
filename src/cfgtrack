@@ -133,7 +133,7 @@ compare() {
 
     # Were there any changes?
     if [ -s "$TMP_FILE" ]; then
-        if [ -n "$ARCHIVE" ]; then
+        if [ "$ARCHIVE" -gt 0 ]; then
             # Store the diff in the archive
             ARCHIVE_FILE=$(date +"%Y-%m-%d_%H:%M.diff")
             cp "$TMP_FILE" "$ARCHIVE_DIR/$ARCHIVE_FILE"
@@ -149,7 +149,7 @@ compare() {
             rm "/tmp/$ATTACH_FNAME"
         fi
 
-        if [ -z "$SILENT" ]; then
+        if [ "$SILENT" -gt 0 ]; then
             # Not --silent
             cat "$TMP_FILE"
         fi
