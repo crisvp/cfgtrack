@@ -29,6 +29,7 @@ source cfgtrack.conf
 
 TRACK_DIR="${TRACK_DIR:-/var/lib/cfgtrack/tracking}"
 ARCHIVE_DIR="${ARCHIVE_DIR:-/var/lib/cfgtrack/archive}"
+
 VERSION="%%VERSION%%"
 AUTHOR="Ferry Boender <ferry.boender@electricmonk.nl>"
 
@@ -66,7 +67,7 @@ validate_path() {
     fi
 
     if [ -z "${${P//\//}//./}" ]; then
-        err "Refusing to track the root directory"
+        err "Refusing to track the root directory."
     fi
 
     if [ ${P:0:1} \!= '/' ]; then
@@ -119,11 +120,12 @@ track() {
 #
 untrack() {
     P=$1
-    validate_path "$P"
 
     # Strip off leading '/'s and '.'s to prevent disaster
     UNTRACK=$(echo "$1" | sed -e 's/^[\/\.]*//')
     UNTRACK="${TRACK_DIR}/${UNTRACK}"
+
+    validate_path "$UNTRACK"
 
     if [ \! \( -d "${UNTRACK}" -o -f "${UNTRACK}" \) ]; then
         err "Unexpected situation: ${UNTRACK} is not a regular file or directory."
@@ -144,16 +146,31 @@ compare() {
     TMP_FILE="$(mktemp)"
     PREV_DIR="$(pwd)"
     cd "$TRACK_DIR"
+
+    # Bug/Feature: Only compare files. Symlinks, device files, etc. are all
+    # stored, but not compared.
     find . -type f | while read -r file; do 
-        diff -Nur "$file" "/$file" >> "$TMP_FILE"
+        diff -Nu "$file" "${file#.}" >> "$TMP_FILE"
         RET_CODE=$?
-        if [ $RET_CODE -eq 1 ] || [ $RET_CODE -eq 2 ]; then
+
+        # diff: An exit status of 0 means no differences were found, 1 means
+        # some differences were found, and 2 means trouble.
+        #
+        # With -N, diff returns 1 when the file does not exist.
+        #
+        if [ $RET_CODE -eq 2 ]; then
+            err "Error invoking command: diff -Nu \"$file\" \"${file#.}\""
+        fi
+
+        if [ $RET_CODE -eq 1 ]; then
             # File has changed. Store the new file in the tracking dir.
             if [ \! -e "${file#.}" ]; then
+                validate_path "$file"  # just in case ...
+
                 # File no longer exists, remove it from the tracking dir
-                rm "$file"
+                rm -f "$file"
             else
-                cp -a "${file#.}" "$file"
+                cp -p "${file#.}" "$file" # No need to recurse here.
             fi
         fi
     done;
@@ -173,7 +190,7 @@ compare() {
             cp "$TMP_FILE" "/tmp/$ATTACH_FNAME"
             BODY="cfgtrack running at $(hostname -f) has found changes in tracked files.\n\n"
             BODY="${BODY}Please see the attached file for a list of changes in Diff format\n"
-            printf "$BODY" | $(dirname $0)/cfgtrack_mail -t $MAIL_TO -s "cfgtrack @ $(hostname -f): Changes found" /tmp/$ATTACH_FNAME 
+            printf "$BODY" | $(dirname $0)/cfgtrack_mail -t $MAIL_TO -s "cfgtrack @ $(hostname -f): Changes found" "/tmp/$ATTACH_FNAME"
             rm "/tmp/$ATTACH_FNAME"
         fi
 
