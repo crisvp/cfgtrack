@@ -62,7 +62,7 @@ err() {
 # List files and dirs being tracked
 # 
 list() {
-    cd $TRACK_DIR
+    cd "$TRACK_DIR"
     find . -type f | sed "s/^\.//"
 }
 
@@ -76,10 +76,10 @@ track() {
     fi
 
     if [ -d "$P" ]; then
-        P_DIR=${P:1}
+        P_DIR="${P:1}"
         P="${P}/."
     else
-        P_DIR=${$(dirname $P):1}
+        P_DIR="${$(dirname $P):1}"
     fi
 
     mkdir -p "$TRACK_DIR/$P_DIR"
@@ -92,7 +92,7 @@ track() {
 #
 untrack() {
     P=$1
-    if [ $(echo $P | head -c1) \!= '/' ]; then
+    if [ $(echo "$P" | head -c1) \!= '/' ]; then
         err "Path must be absolute (start with /)"
     fi
     UNTRACK="${1#/}" # Strip off leading '/' to prevent disaster
@@ -101,7 +101,7 @@ untrack() {
     fi
     # $TRACK_DIR is checked to never be empty or '/', so this rm -rf should be
     # safe.
-    rm -rf $TRACK_DIR/$UNTRACK
+    rm -rf "$TRACK_DIR/$UNTRACK"
     echo "No longer tracking $P"
 }
 
@@ -113,11 +113,11 @@ compare() {
 
     # Go through all the files being tracked and diff them with their original
     # version
-    TMP_FILE=$(mktemp)
-    PREV_DIR=$(pwd)
-    cd $TRACK_DIR
+    TMP_FILE="$(mktemp)"
+    PREV_DIR="$(pwd)"
+    cd "$TRACK_DIR"
     find . -type f | while read -r file; do 
-        diff -Nur "$file" "/$file" >> $TMP_FILE
+        diff -Nur "$file" "/$file" >> "$TMP_FILE"
         RET_CODE=$?
         if [ $RET_CODE -eq 1 ] || [ $RET_CODE -eq 2 ]; then
             # File has changed. Store the new file in the tracking dir.
@@ -129,42 +129,42 @@ compare() {
             fi
         fi
     done;
-    cd $PREV_DIR
+    cd "$PREV_DIR"
 
     # Were there any changes?
-    if [ -s $TMP_FILE ]; then
+    if [ -s "$TMP_FILE" ]; then
         if [ -n "$ARCHIVE" ]; then
             # Store the diff in the archive
             ARCHIVE_FILE=$(date +"%Y-%m-%d_%H:%M.diff")
-            cp $TMP_FILE $ARCHIVE_DIR/$ARCHIVE_FILE
+            cp "$TMP_FILE" "$ARCHIVE_DIR/$ARCHIVE_FILE"
         fi
 
         if [ -n "$MAIL_TO" ]; then
             # Send the diff to email recipient(s)
             ATTACH_FNAME="$(hostname -f)_$(date +"%Y-%m-%d_%H:%M.diff")"
-            cp $TMP_FILE /tmp/$ATTACH_FNAME
+            cp "$TMP_FILE" "/tmp/$ATTACH_FNAME"
             BODY="cfgtrack running at $(hostname -f) has found changes in tracked files.\n\n"
             BODY="${BODY}Please see the attached file for a list of changes in Diff format\n"
             printf "$BODY" | $(dirname $0)/cfgtrack_mail -t $MAIL_TO -s "cfgtrack @ $(hostname -f): Changes found" /tmp/$ATTACH_FNAME 
-            rm /tmp/$ATTACH_FNAME
+            rm "/tmp/$ATTACH_FNAME"
         fi
 
         if [ -z "$SILENT" ]; then
             # Not --silent
-            cat $TMP_FILE
+            cat "$TMP_FILE"
         fi
     fi
-    rm $TMP_FILE
+    rm "$TMP_FILE"
 }
 
 # Validate settings
-if [ $TRACK_DIR = '/' ]; then
+if [ "$TRACK_DIR" = '/' ]; then
     err "Tracking dir $TRACK_DIR cannot be /"
 fi
-if [ \! -d $TRACK_DIR ]; then
+if [ \! -d "$TRACK_DIR" ]; then
     install -d -m 0700 "$TRACK_DIR" || err "Can't create archive dir"
 fi
-if [ \! -d $ARCHIVE_DIR ]; then
+if [ \! -d "$ARCHIVE_DIR" ]; then
     install -d -m 0700 "$ARCHIVE_DIR" || err "Can't create archive dir"
 fi
 
@@ -220,7 +220,7 @@ while true ; do
             break
             ;;
         compare)
-            compare $ARCHIVE
+            compare "$ARCHIVE"
             exit $?
             break
             ;;
