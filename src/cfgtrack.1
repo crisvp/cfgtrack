@@ -18,7 +18,7 @@ cfgtrack \- track and report diffs in files between invocations.
 <path>
 
 .B cfgtrack
-[-s] [-a] [-s] [-m "<email>[ <email>]"]
+[-s] [-r] [-a] [-s] [-m "<email>[ <email>]"]
 .I compare
 
 .SH DESCRIPTION
@@ -38,6 +38,8 @@ Show the difference (in diff(1) format) in files being tracked since the last ti
 Do not output the diff on the console.
 .IP "-a, --archive"
 Store the diff in the archive directory, if there were any changes.
+.IP "-r, --ignore-unreadable"
+Don't fail when files can't be read by the script. This trades reliability for the ability to run as a non-root user.
 .IP "-m, --mail <email>"
 In case of changes in tracked files, send an email to <email>. <email> may be multiple address, in which case they must be separated by a space and the whole list must be enclosed in quotes.
 .IP "-h, --help"
