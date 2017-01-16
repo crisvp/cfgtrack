@@ -171,6 +171,7 @@ fi
 # Default values
 ARCHIVE=0
 SILENT=0
+MAIL_TO=""
 
 # Handle options
 while true ; do
