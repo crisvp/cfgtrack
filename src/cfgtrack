@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #
 # Copyright (c) 2015 Ferry Boender <ferry.boender@electricmonk.nl>
@@ -70,7 +70,16 @@ track() {
     if [ $(echo $P | head -c1) \!= '/' ]; then
         err "Path must be absolute (start with /)"
     fi
-    cp -ar --parents $P $TRACK_DIR/ || exit $?
+
+    if [ -d "$P" ]; then
+        P_DIR=${P:1}
+        P="${P}/."
+    else
+        P_DIR=${$(dirname $P):1}
+    fi
+
+    mkdir -p "$TRACK_DIR/$P_DIR"
+    cp -a $P "$TRACK_DIR/$P_DIR" || exit $?
     echo "Now tracking $P"
 }
 
