@@ -23,8 +23,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-TRACK_DIR=/var/lib/cfgtrack/tracking
-ARCHIVE_DIR=/var/lib/cfgtrack/archive
+source cfgtrack.conf
+
+TRACK_DIR="${TRACK_DIR:-/var/lib/cfgtrack/tracking}"
+ARCHIVE_DIR="${ARCHIVE_DIR:-/var/lib/cfgtrack/archive}"
 VERSION="%%VERSION%%"
 AUTHOR="Ferry Boender <ferry.boender@electricmonk.nl>"
 

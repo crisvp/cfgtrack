@@ -2,6 +2,7 @@ PROG=cfgtrack
 
 install:
 	cp src/cfgtrack /usr/bin/cfgtrack
+	cp src/cfgtrack.conf /etc
 	cp src/cfgtrack_mail /usr/bin/cfgtrack_mail
 	gzip -c src/cfgtrack.1 > /usr/share/man/man1/cfgtrack.1.gz
 
@@ -9,7 +10,7 @@ uninstall:
 	rm /usr/share/man/man1/cfgtrack.1.gz
 	rm /usr/bin/cfgtrack_mail
 	rm /usr/bin/cfgtrack
-	echo "To remove configuration for cfgtrack, rm -rf /var/lib/cfgtrack/"
+	echo "To remove configuration for cfgtrack, rm -rf /etc/cfgtrack.conf /var/lib/cfgtrack/"
 
 release: release_src release_deb release_rpm
 
@@ -22,6 +23,7 @@ release_src:
 	rm -rf $(PROG)-$(REL_VERSION)
 	mkdir $(PROG)-$(REL_VERSION)
 	cp src/cfgtrack $(PROG)-$(REL_VERSION)/
+	cp src/cfgtrack.conf $(PROG)-$(REL_VERSION)/
 	cp src/cfgtrack_mail $(PROG)-$(REL_VERSION)/
 	cp src/cfgtrack.1 $(PROG)-$(REL_VERSION)/
 	cp LICENSE.txt $(PROG)-$(REL_VERSION)/
@@ -42,6 +44,7 @@ release_deb:
 	@if [ -z "$(REL_VERSION)" ]; then echo "REL_VERSION required"; exit 1; fi
 
 	mkdir -p rel_deb/usr/bin
+	mkdir -p rel_deb/etc
 	mkdir -p rel_deb/usr/share/doc/$(PROG)
 	mkdir -p rel_deb/usr/share/man/man1
 
@@ -49,6 +52,7 @@ release_deb:
 	cp LICENSE.txt rel_deb/usr/share/doc/$(PROG)
 	cp README.md rel_deb/usr/share/doc/$(PROG)
 	cp src/$(PROG) rel_deb/usr/bin/$(PROG)
+	cp src/cfgtrack.conf deb/etc/cfgtrack.conf
 	cp src/$(PROG).1 rel_deb/usr/share/man/man1
 	cp src/cfgtrack_mail rel_deb/usr/bin/
 	cp -ar contrib/debian/DEBIAN rel_deb/
