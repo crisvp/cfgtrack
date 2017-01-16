@@ -23,6 +23,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+set -u              # Treat unset variables as an error when substituting.
+
 source cfgtrack.conf
 
 TRACK_DIR="${TRACK_DIR:-/var/lib/cfgtrack/tracking}"
@@ -165,6 +167,10 @@ fi
 if [ \! -d $ARCHIVE_DIR ]; then
     install -d -m 0700 "$ARCHIVE_DIR" || err "Can't create archive dir"
 fi
+
+# Default values
+ARCHIVE=0
+SILENT=0
 
 # Handle options
 while true ; do
