@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Zie ook https://github.com/crisvp/cfgtrack/
+
 #
 # Copyright (c) 2015 Ferry Boender <ferry.boender@electricmonk.nl>
 #
@@ -113,7 +115,7 @@ track() {
     fi
 
     mkdir -p "$TRACK_DIR/$P_DIR"
-    cp -a "$P" "$TRACK_DIR/$P_DIR" || exit $?
+    cp -a "$P" "$TRACK_DIR/$P_DIR" || ([ "$IGNORE_UNREADABLE" -gt 0 ] && exit $?)
     echo "Now tracking $P"
 }
 
@@ -151,7 +153,12 @@ compare() {
 
     # Bug/Feature: Only compare files. Symlinks, device files, etc. are all
     # stored, but not compared.
-    find . -type f | while read -r file; do 
+
+    FIND_OPTS=""
+    if [ "$IGNORE_UNREADABLE" -gt 0 ]; then
+       FIND_OPTS="-readable"
+    fi
+    find . -type f $FIND_OPTS | while read -r file; do 
         diff -Nu "$file" "${file#.}" >> "$TMP_FILE"
         RET_CODE=$?
 
@@ -216,6 +223,7 @@ fi
 # Default values
 ARCHIVE=0
 SILENT=0
+IGNORE_UNREADABLE=0
 MAIL_TO=""
 
 # Handle options
@@ -235,6 +243,10 @@ while true ; do
             fi
             MAIL_TO=$2
             shift 2
+            ;;
+        -r|--ignore-unreadable)
+            IGNORE_UNREADABLE=1
+            shift 1
             ;;
         -h|--help)
             usage
