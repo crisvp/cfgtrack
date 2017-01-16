@@ -58,6 +58,33 @@ err() {
     exit 2
 }
 
+validate_path() {
+    P=$1
+
+    if [ -z "${P}" ]; then
+        err "Path must not be empty."
+    fi
+
+    if [ -z "${${P//\//}//./}" ]; then
+        err "Refusing to track the root directory"
+    fi
+
+    if [ ${P:0:1} \!= '/' ]; then
+        err "Path must be absolute (start with /); '$P' is not."
+    fi
+
+    if [ ${P: -1} = '/' -o ${P: -1} = '.' ]; then
+        err "Path must not end in / or .; '$P' does."
+    fi
+
+    # Explicitly test for symlinks because test dereferences locations.
+    if [ -e "$P" -a -L "$P" -o \! \( -d "$P" -o -f "$P" \) ]; then
+        err "$P is not a regular file or directory."
+    fi
+
+    return 0
+}
+
 #
 # List files and dirs being tracked
 # 
@@ -71,14 +98,7 @@ list() {
 #
 track() {
     P=$1
-    if [ $(echo $P | head -c1) \!= '/' ]; then
-        err "Path must be absolute (start with /)"
-    fi
-
-    # Explicitly test for symlinks because test dereferences locations.
-    if [ -e "$P" -a -L "$P" -o \! \( -d "$P" -o -f "$P" \) ]; then
-        err "$P is not a regular file or directory."
-    fi
+    validate_path "$P"
 
     if [ -d "$P" ]; then
         P_DIR="${P:1}"
@@ -99,16 +119,17 @@ track() {
 #
 untrack() {
     P=$1
-    if [ $(echo "$P" | head -c1) \!= '/' ]; then
-        err "Path must be absolute (start with /)"
+    validate_path "$P"
+
+    # Strip off leading '/'s and '.'s to prevent disaster
+    UNTRACK=$(echo "$1" | sed -e 's/^[\/\.]*//')
+    UNTRACK="${TRACK_DIR}/${UNTRACK}"
+
+    if [ \! \( -d "${UNTRACK}" -o -f "${UNTRACK}" \) ]; then
+        err "Unexpected situation: ${UNTRACK} is not a regular file or directory."
     fi
-    UNTRACK="${1#/}" # Strip off leading '/' to prevent disaster
-    if [ -z "$UNTRACK" ]; then
-        err "Empty untracking path specified"
-    fi
-    # $TRACK_DIR is checked to never be empty or '/', so this rm -rf should be
-    # safe.
-    rm -rf "$TRACK_DIR/$UNTRACK"
+
+    rm -rf "$UNTRACK"
     echo "No longer tracking $P"
 }
 
