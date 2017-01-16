@@ -25,7 +25,7 @@
 
 set -u              # Treat unset variables as an error when substituting.
 
-source cfgtrack.conf
+. /usr/local/etc/cfgtrack.conf
 
 TRACK_DIR="${TRACK_DIR:-/var/lib/cfgtrack/tracking}"
 ARCHIVE_DIR="${ARCHIVE_DIR:-/var/lib/cfgtrack/archive}"
@@ -66,7 +66,8 @@ validate_path() {
         err "Path must not be empty."
     fi
 
-    if [ -z "${${P//\//}//./}" ]; then
+    T=${P//\//}
+    if [ -z "${T//./}" ]; then
         err "Refusing to track the root directory."
     fi
 
@@ -103,15 +104,16 @@ track() {
 
     if [ -d "$P" ]; then
         P_DIR="${P:1}"
-        if [ \! "${P: -1}" == "/" ]; then
-            P="${P}/"
+        if [ \! "${P: -2}" = "/." ]; then
+            P="${P}/."
         fi
     else
-        P_DIR="${$(dirname $P):1}"
+        T=$(dirname $P)
+        P_DIR="${T:1}"
     fi
 
     mkdir -p "$TRACK_DIR/$P_DIR"
-    cp -a $P "$TRACK_DIR/$P_DIR" || exit $?
+    cp -a "$P" "$TRACK_DIR/$P_DIR" || exit $?
     echo "Now tracking $P"
 }
 
@@ -165,8 +167,6 @@ compare() {
         if [ $RET_CODE -eq 1 ]; then
             # File has changed. Store the new file in the tracking dir.
             if [ \! -e "${file#.}" ]; then
-                validate_path "$file"  # just in case ...
-
                 # File no longer exists, remove it from the tracking dir
                 rm -f "$file"
             else
@@ -194,7 +194,7 @@ compare() {
             rm "/tmp/$ATTACH_FNAME"
         fi
 
-        if [ "$SILENT" -gt 0 ]; then
+        if [ "$SILENT" -eq 0 ]; then
             # Not --silent
             cat "$TMP_FILE"
         fi
