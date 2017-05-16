@@ -31,6 +31,7 @@ set -u              # Treat unset variables as an error when substituting.
 
 TRACK_DIR="${TRACK_DIR:-/var/lib/cfgtrack/tracking}"
 ARCHIVE_DIR="${ARCHIVE_DIR:-/var/lib/cfgtrack/archive}"
+MAIL_HOSTNAME="${MAIL_HOSTNAME:-$(uname -n)}"
 
 VERSION="%%VERSION%%"
 AUTHOR="Ferry Boender <ferry.boender@electricmonk.nl>"
@@ -115,7 +116,7 @@ track() {
     fi
 
     mkdir -p "$TRACK_DIR/$P_DIR"
-    cp -a "$P" "$TRACK_DIR/$P_DIR" || ([ "$IGNORE_UNREADABLE" -gt 0 ] && exit $?)
+    cp -fa "$P" "$TRACK_DIR/$P_DIR" || ([ "$IGNORE_UNREADABLE" -gt 0 ] && exit $?)
     echo "Now tracking $P"
 }
 
@@ -185,7 +186,7 @@ compare() {
                 # File no longer exists, remove it from the tracking dir
                 rm -f "$file"
             else
-                cp -p "${file#.}" "$file" # No need to recurse here.
+                cp -fp "${file#.}" "$file" # No need to recurse here.
             fi
         fi
     done;
@@ -204,8 +205,9 @@ compare() {
             ATTACH_FNAME="$(hostname -f)_$(date +"%Y-%m-%d_%H:%M.diff")"
             cp "$TMP_FILE" "/tmp/$ATTACH_FNAME"
             BODY="cfgtrack running at $(hostname -f) has found changes in tracked files.\n\n"
-            BODY="${BODY}Please see the attached file for a list of changes in Diff format\n"
-            printf "$BODY" | $(dirname $0)/cfgtrack_mail -t $MAIL_TO -s "cfgtrack @ $(hostname -f): Changes found" "/tmp/$ATTACH_FNAME"
+            BODY="${BODY}Please see the attached file for a list of changes in Diff format\n\n"
+            BODY="${BODY}Most recent logins:\n$(last -10)\n"
+            printf "$BODY" | $(dirname $0)/cfgtrack_mail -t $MAIL_TO -s "cfgtrack @ ${MAIL_HOSTNAME}: Changes found" "/tmp/$ATTACH_FNAME"
             rm "/tmp/$ATTACH_FNAME"
         fi
 
